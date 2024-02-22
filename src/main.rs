@@ -183,7 +183,7 @@ async fn main() {
         .or(picocss_route);
 
     tokio::spawn(handle_connection(app_state_clone));
-    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+    warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
 }
 
 #[derive(Debug, Deserialize)]
