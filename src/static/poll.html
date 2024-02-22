@@ -8,13 +8,71 @@
     <script src="resource/echarts.min.js"></script>
     <title>BUCSSA 投票系统</title>
   </head>
+
   <body>
+    <dialog id="modal-disconnected">
+      <article>
+        <h2
+          style="
+            text-align: center;
+            margin: 0.5em 0.5em;
+            user-select: none;
+            cursor: default;
+          "
+        >
+          Websocket连接已中断
+        </h2>
+      </article>
+    </dialog>
+    <dialog id="modal-connecting" open>
+      <article>
+        <h2
+          style="
+            text-align: center;
+            margin: 0.5em 0.5em;
+            user-select: none;
+            cursor: default;
+          "
+        >
+          正在连接至Websocket
+        </h2>
+      </article>
+    </dialog>
+    <dialog id="modal-idle">
+      <article>
+        <h2
+          style="
+            text-align: center;
+            margin: 0.5em 0.5em;
+            user-select: none;
+            cursor: default;
+          "
+        >
+          当前未进行任何投票
+        </h2>
+      </article>
+    </dialog>
     <main class="container">
-      <h1>Hello world!</h1>
-      <input type="number" id="pollInput" placeholder="Enter a number (空文本就是0，懒得管了，没人拿手机改前端)" />
-      <button onclick="sendWebSocketRequest()">Send WebSocket Request</button>
+    <h1 id="title" style="text-align: center;">Hello world!</h1>
+      <div
+        id="buttonContainer"
+        style="
+          display: flex;
+          align-items: stretch;
+          flex-wrap: wrap;
+          justify-content: space-between;
+        "
+      ></div>
     </main>
   </body>
+  <style>
+    .option {
+      margin: 0.5em 0.5em;
+      display: flex;
+      flex-grow: 1;
+      align-items: stretch;
+    }
+  </style>
   <script>
     const protocol =
       document.location.protocol === "https:" ? "wss://" : "ws://";
@@ -22,21 +80,92 @@
     const wsURL = protocol + host + "/websocket/poll";
     const socket = new WebSocket(wsURL);
 
-    socket.addEventListener("message", (event) => {
-      console.log("WebSocket message received:", event.data);
+    socket.addEventListener("open", (event) => {
+      console.log("WebSocket 连接已打开");
+      closeModal(document.getElementById("modal-connecting"));
     });
 
     socket.addEventListener("close", (event) => {
-      console.log("WebSocket connection closed");
+      openModal(document.getElementById("modal-disconnected"));
     });
 
-    function sendWebSocketRequest() {
-      // 获取用户输入的数字
-      const userInput = document.getElementById("pollInput").value;
+    const buttonContainer = document.getElementById("buttonContainer");
+    const title = document.getElementById("title");
+
+    socket.addEventListener("message", (event) => {
+      var message = JSON.parse(event.data);
+
+      if (message.status == 1) {
+        var buttonTexts = message.options;
+        buttonContainer.innerHTML = "";
+        buttonTexts.forEach((text, index) => {
+          const button = document.createElement("button");
+          button.textContent = text;
+          button.className = "option";
+          button.id = index
+          button.addEventListener("click", () => {
+            sendWebSocketRequest(button.id);
+          });
+          buttonContainer.appendChild(button);
+        });
+        title.textContent = message.title;
+        closeModal(document.getElementById("modal-idle"));
+      } else if (message.status == 2) {
+        openModal(document.getElementById("modal-idle"));
+      }
+    });
+
+    function sendWebSocketRequest(value) {
       const jsonRequest = JSON.stringify({
-        poll: parseInt(userInput, 10) || 0,
+        poll: parseInt(value, 10) || 0,
       });
       socket.send(jsonRequest);
     }
+
+    // Config
+    const isOpenClass = "modal-is-open";
+    const openingClass = "modal-is-opening";
+    const closingClass = "modal-is-closing";
+    const scrollbarWidthCssVar = "--pico-scrollbar-width";
+    const animationDuration = 400; // ms
+    let visibleModal = null;
+
+    // Open modal
+    const openModal = (modal) => {
+      const { documentElement: html } = document;
+      const scrollbarWidth = getScrollbarWidth();
+      if (scrollbarWidth) {
+        html.style.setProperty(scrollbarWidthCssVar, `${scrollbarWidth}px`);
+      }
+      html.classList.add(isOpenClass, openingClass);
+      setTimeout(() => {
+        visibleModal = modal;
+        html.classList.remove(openingClass);
+      }, animationDuration);
+      modal.showModal();
+    };
+
+    // Close modal
+    const closeModal = (modal) => {
+      visibleModal = null;
+      const { documentElement: html } = document;
+      html.classList.add(closingClass);
+      setTimeout(() => {
+        html.classList.remove(closingClass, isOpenClass);
+        html.style.removeProperty(scrollbarWidthCssVar);
+        modal.close();
+      }, animationDuration);
+    };
+
+    // Get scrollbar width
+    const getScrollbarWidth = () => {
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+      return scrollbarWidth;
+    };
+
+    const isScrollbarVisible = () => {
+      return document.body.scrollHeight > screen.height;
+    };
   </script>
 </html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="stylesheet" href="resource/pico.red.min.css" />
+    <title>BUCSSA 投票系统临时控制台</title>
+  </head>
+  <body>
+    <main class="container">
+      <h1>BUCSSA 投票系统临时控制台，但是否真的临时和我无关</h1>
+
+      <article>
+        <header>停止当前投票</header>
+        <form id="stopPollForm">
+          <button type="button" onclick="stopPoll()">Stop Poll</button>
+        </form>
+      </article>
+      <article>
+        <header>创建新的投票</header>
+        <form id="createPollForm">
+          <label for="pollId">Poll ID:</label>
+          <input type="text" id="pollId" name="id" required />
+
+          <label for="pollName">Poll Name:</label>
+          <input type="text" id="pollName" name="name" required />
+
+          <label for="pollOptions">Poll Options (comma-separated):</label>
+          <input type="text" id="pollOptions" name="options" required />
+
+          <button type="button" onclick="createPoll()">Create Poll</button>
+        </form>
+        <footer>暂无查重，但我不说你也发现不了</footer>
+      </article>
+
+      <article>
+        <header>激活指定投票</header>
+        <form id="startPollForm">
+          <label for="startPollId">Poll ID:</label>
+          <input type="text" id="startPollId" name="id" required />
+          <button type="button" onclick="startPoll()">Start Poll</button>
+        </form>
+      </article>
+
+      <script>
+        const apiUrl = window.location.origin + "/api";
+
+        function stopPoll() {
+          fetch(apiUrl + "/stop_poll", {
+            method: "POST",
+          })
+            .then((response) => response.json())
+            .then((data) => console.log(data))
+            .catch((error) => console.error(error));
+        }
+
+        function createPoll() {
+          const pollId = document.getElementById("pollId").value;
+          const pollName = document.getElementById("pollName").value;
+          const pollOptions = document
+            .getElementById("pollOptions")
+            .value.split(",");
+
+          fetch(apiUrl + "/create_poll", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              id: pollId,
+              name: pollName,
+              options: pollOptions,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => console.log(data))
+            .catch((error) => console.error(error));
+        }
+
+        function startPoll() {
+          const startPollId = document.getElementById("startPollId").value;
+
+          fetch(apiUrl + "/start_poll", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              id: startPollId,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => console.log(data))
+            .catch((error) => console.error(error));
+        }
+      </script>
+    </main>
+  </body>
+</html>

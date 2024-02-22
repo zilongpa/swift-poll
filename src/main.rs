@@ -12,9 +12,6 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::{Message, WebSocket};
 use warp::{http::Uri, Filter, Rejection, Reply};
 
-// use serde::Serialize;
-// use serde_json::to_string;
-
 static NEXT_POLL_CONNECTION_ID: AtomicUsize = AtomicUsize::new(1);
 static NEXT_SCREEN_CONNECTION_ID: AtomicUsize = AtomicUsize::new(1);
 
@@ -61,8 +58,10 @@ type AppStateArc = Arc<RwLock<AppState>>;
 async fn main() {
     const SCREEN_HTML: &'static str = include_str!("static/screen.html");
     const POLL_HTML: &'static str = include_str!("static/poll.html");
+    const CONTROL_HTML: &'static str = include_str!("static/control.html");
     const ECHARTS_JS: &'static str = include_str!("static/echarts.min.js");
     const PICO_CSS: &'static str = include_str!("static/pico.red.min.css");
+    const CONTETTI_JS: &'static str = include_str!("static/tsparticles.confetti.bundle.min.js");
 
     let app_state = AppStateArc::default();
     let app_state_clone = app_state.clone();
@@ -153,6 +152,7 @@ async fn main() {
     // GET 路由
     let poll_route = warp::path("poll").map(move || warp::reply::html(POLL_HTML));
     let screen_route = warp::path("screen").map(move || warp::reply::html(SCREEN_HTML));
+    let control_route = warp::path("control").map(move || warp::reply::html(CONTROL_HTML));
 
     // 资源路由
     let echarts_route = warp::path!("resource" / "echarts.min.js").map(move || {
@@ -161,6 +161,15 @@ async fn main() {
 
     let picocss_route = warp::path!("resource" / "pico.red.min.css")
         .map(move || warp::reply::with_header(PICO_CSS, "content-type", "text/css; charset=utf-8"));
+
+    let confetti_route =
+        warp::path!("resource" / "tsparticles.confetti.bundle.min.js").map(move || {
+            warp::reply::with_header(
+                CONTETTI_JS,
+                "content-type",
+                "text/javascript; charset=utf-8",
+            )
+        });
 
     // 默认路由
     let default_route = warp::path::end().map(|| warp::redirect(Uri::from_static("/poll")));
@@ -176,10 +185,13 @@ async fn main() {
         //
         .or(poll_route)
         .or(screen_route)
+        .or(control_route)
         //
         .or(echarts_route)
-        .or(picocss_route);
+        .or(picocss_route)
+        .or(confetti_route);
 
+        println!("我发誓之后一定会把Print补上...");
     tokio::spawn(handle_connection(app_state_clone));
     warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
 }
@@ -201,7 +213,6 @@ async fn handle_create_poll(
         .await
         .polls
         .insert(json.id, Poll::new(json.name, json.options));
-    println!("yeeeee");
     Ok(warp::reply::html("请求成功"))
 }
 
@@ -215,7 +226,6 @@ async fn handle_start_poll(
     app_state_clone: AppStateArc,
 ) -> Result<impl Reply, Rejection> {
     if app_state_clone.read().await.polls.contains_key(&json.id) {
-        println!("Found value");
         app_state_clone.write().await.current = Some(json.id.to_string());
 
         let new_json = json!({
@@ -381,6 +391,7 @@ async fn poll_connected(ws: WebSocket, app_state_clone: AppStateArc) {
     match &app_state_clone.read().await.current {
         Some(current) => {
             let new_json = json!({
+                "status": 1,
                 "title": app_state_clone.read().await.polls.get(current).unwrap().name,
                 "options": app_state_clone.read().await.polls.get(current).unwrap().options,
             });
@@ -409,13 +420,13 @@ async fn poll_connected(ws: WebSocket, app_state_clone: AppStateArc) {
                     Ok(parsed_json) => {
                         // 提取 poll 字段的整数值
                         if let Some(poll_value) = parsed_json.get("poll") {
-                            if let Some(poll_int) = poll_value.as_i64() {
+                            if let Some(poll_int) = poll_value.as_u64() {
                                 if app_state_clone.read().await.current.is_some() {
                                     let a = app_state_clone.read().await.current.clone().unwrap();
                                     let mut app_state = app_state_clone.write().await;
                                     if let Some(poll_item) = app_state.polls.get_mut(&a) {
-                                        if poll_item.polls.len() > poll_int.try_into().unwrap() {
-                                            poll_item.poll(poll_int.try_into().unwrap());
+                                        if poll_item.polls.len() > poll_int.try_into().unwrap_or_default() {
+                                            poll_item.poll(poll_int.try_into().unwrap_or_default());
                                             println!("Poll value: {}", poll_int);
                                         }
                                     }

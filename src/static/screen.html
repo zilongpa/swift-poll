@@ -6,16 +6,11 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="stylesheet" href="resource/pico.red.min.css" />
     <script src="resource/echarts.min.js"></script>
+    <script src="resource/tsparticles.confetti.bundle.min.js"></script>
     <title>投票数据</title>
   </head>
+
   <body style="user-select: none; cursor: default">
-    <dialog
-      id="modal-connecting; margin: 0.5em 0.5em;user-select: none; cursor: default"
-    >
-      <article>
-        <h2 style="text-align: center">正在连接至Websocket</h2>
-      </article>
-    </dialog>
     <dialog id="modal-disconnected">
       <article>
         <h2
@@ -27,6 +22,20 @@
           "
         >
           Websocket连接已中断
+        </h2>
+      </article>
+    </dialog>
+    <dialog id="modal-connecting" open>
+      <article>
+        <h2
+          style="
+            text-align: center;
+            margin: 0.5em 0.5em;
+            user-select: none;
+            cursor: default;
+          "
+        >
+          正在连接至Websocket
         </h2>
       </article>
     </dialog>
@@ -46,7 +55,7 @@
     }
     option = {
       title: {
-        text: "最佳原神四星角色",
+        text: "无数据",
         left: "center",
         top: "1%",
         textStyle: {
@@ -58,39 +67,14 @@
       },
       xAxis: {
         type: "category",
-        data: [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Tue",
-          "Wed",
-          "Thu",
-        ],
+        data: ["原", "神", "启", "动"],
       },
       yAxis: {
         type: "value",
       },
       series: [
         {
-          data: [
-            120,
-            {
-              value: 200,
-              itemStyle: {
-                color: "#a90000",
-              },
-            },
-            150,
-            80,
-            150,
-            80,
-            150,
-            80,
-          ],
+          data: [0, 0, 0, 0],
           type: "bar",
           colorBy: "data",
         },
@@ -108,7 +92,6 @@
     const wsURL = protocol + host + "/websocket/screen";
     const socket = new WebSocket(wsURL);
 
-    // 监听连接打开事件
     socket.addEventListener("open", (event) => {
       console.log("WebSocket 连接已打开");
       closeModal(document.getElementById("modal-connecting"));
@@ -118,7 +101,6 @@
       openModal(document.getElementById("modal-disconnected"));
     });
 
-    // 监听消息接收事件
     socket.addEventListener("message", (event) => {
       var message = JSON.parse(event.data);
 
@@ -129,7 +111,29 @@
         option.xAxis.data = message.options;
         option.series[0].data = Array(message.options.length).fill(0);
       } else if (message.status == 2) {
-        alert("投票结束了");
+        const end = Date.now() + 10 * 1000;
+        const colors = ["#bb0000", "#ffffff"];
+        (function frame() {
+          confetti({
+            particleCount: 2,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: colors,
+          });
+
+          confetti({
+            particleCount: 2,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: colors,
+          });
+
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        })();
       }
       myChart.setOption(option);
     });
