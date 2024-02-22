@@ -1,9 +1,7 @@
-use futures::lock::Mutex;
 use futures::{SinkExt, StreamExt, TryFutureExt};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use std::future::Future;
 use std::sync::{
     atomic::{AtomicUsize, Ordering},
     Arc,
@@ -38,9 +36,9 @@ impl Poll {
         }
     }
 
-    fn reset(&mut self) {
-        self.polls = vec![0; self.options.len()];
-    }
+    // fn reset(&mut self) {
+    //     self.polls = vec![0; self.options.len()];
+    // }
 
     fn poll(&mut self, option: usize) {
         if option < self.polls.len() {
