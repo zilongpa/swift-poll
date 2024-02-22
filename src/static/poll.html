@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="stylesheet" href="resource/pico.red.min.css" />
+    <script src="resource/echarts.min.js"></script>
+    <title>BUCSSA 投票系统</title>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Hello world!</h1>
+      <input type="number" id="pollInput" placeholder="Enter a number (空文本就是0，懒得管了，没人拿手机改前端)" />
+      <button onclick="sendWebSocketRequest()">Send WebSocket Request</button>
+    </main>
+  </body>
+  <script>
+    const protocol =
+      document.location.protocol === "https:" ? "wss://" : "ws://";
+    const host = document.location.host;
+    const wsURL = protocol + host + "/websocket/poll";
+    const socket = new WebSocket(wsURL);
+
+    socket.addEventListener("message", (event) => {
+      console.log("WebSocket message received:", event.data);
+    });
+
+    socket.addEventListener("close", (event) => {
+      console.log("WebSocket connection closed");
+    });
+
+    function sendWebSocketRequest() {
+      // 获取用户输入的数字
+      const userInput = document.getElementById("pollInput").value;
+      const jsonRequest = JSON.stringify({
+        poll: parseInt(userInput, 10) || 0,
+      });
+      socket.send(jsonRequest);
+    }
+  </script>
+</html>

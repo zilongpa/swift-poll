@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="stylesheet" href="resource/pico.red.min.css" />
+    <script src="resource/echarts.min.js"></script>
+    <title>投票数据</title>
+  </head>
+  <body style="user-select: none; cursor: default">
+    <dialog
+      id="modal-connecting; margin: 0.5em 0.5em;user-select: none; cursor: default"
+    >
+      <article>
+        <h2 style="text-align: center">正在连接至Websocket</h2>
+      </article>
+    </dialog>
+    <dialog id="modal-disconnected">
+      <article>
+        <h2
+          style="
+            text-align: center;
+            margin: 0.5em 0.5em;
+            user-select: none;
+            cursor: default;
+          "
+        >
+          Websocket连接已中断
+        </h2>
+      </article>
+    </dialog>
+    <div
+      id="main"
+      style="width: 98%; height: 98%; position: absolute; margin: 1% 1%"
+    ></div>
+  </body>
+  <script type="text/javascript">
+    var chartDom = document.getElementById("main");
+    var myChart = echarts.init(chartDom);
+    var option;
+
+    const data = [];
+    for (let i = 0; i < 10; ++i) {
+      data.push(Math.round(Math.random() * 200));
+    }
+    option = {
+      title: {
+        text: "最佳原神四星角色",
+        left: "center",
+        top: "1%",
+        textStyle: {
+          fontSize: 60,
+        },
+      },
+      grid: {
+        top: "10%",
+      },
+      xAxis: {
+        type: "category",
+        data: [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Tue",
+          "Wed",
+          "Thu",
+        ],
+      },
+      yAxis: {
+        type: "value",
+      },
+      series: [
+        {
+          data: [
+            120,
+            {
+              value: 200,
+              itemStyle: {
+                color: "#a90000",
+              },
+            },
+            150,
+            80,
+            150,
+            80,
+            150,
+            80,
+          ],
+          type: "bar",
+          colorBy: "data",
+        },
+      ],
+    };
+    option && myChart.setOption(option);
+
+    window.addEventListener("resize", function () {
+      myChart.resize();
+    });
+
+    const protocol =
+      document.location.protocol === "https:" ? "wss://" : "ws://";
+    const host = document.location.host;
+    const wsURL = protocol + host + "/websocket/screen";
+    const socket = new WebSocket(wsURL);
+
+    // 监听连接打开事件
+    socket.addEventListener("open", (event) => {
+      console.log("WebSocket 连接已打开");
+      closeModal(document.getElementById("modal-connecting"));
+    });
+
+    socket.addEventListener("close", (event) => {
+      openModal(document.getElementById("modal-disconnected"));
+    });
+
+    // 监听消息接收事件
+    socket.addEventListener("message", (event) => {
+      var message = JSON.parse(event.data);
+
+      if (message.status == 0) {
+        option.series[0].data = message.data;
+      } else if (message.status == 1) {
+        option.title.text = message.title;
+        option.xAxis.data = message.options;
+        option.series[0].data = Array(message.options.length).fill(0);
+      } else if (message.status == 2) {
+        alert("投票结束了");
+      }
+      myChart.setOption(option);
+    });
+
+    // 监听连接关闭事件
+
+    // 监听连接错误事件
+    socket.addEventListener("error", (event) => {
+      console.error("WebSocket 连接发生错误", event);
+    });
+
+    // 发送消息
+    function sendMessage() {
+      const messageInput = document.getElementById("messageInput");
+      const messageText = messageInput.value;
+
+      // 构造 JSON 格式的消息
+      const jsonMessage = {
+        text: messageText,
+      };
+
+      // 将 JSON 消息转换为字符串并发送到服务器
+      socket.send(JSON.stringify(jsonMessage));
+
+      // 清空输入框
+      messageInput.value = "";
+    }
+
+    // Config
+    const isOpenClass = "modal-is-open";
+    const openingClass = "modal-is-opening";
+    const closingClass = "modal-is-closing";
+    const scrollbarWidthCssVar = "--pico-scrollbar-width";
+    const animationDuration = 400; // ms
+    let visibleModal = null;
+
+    // Open modal
+    const openModal = (modal) => {
+      const { documentElement: html } = document;
+      const scrollbarWidth = getScrollbarWidth();
+      if (scrollbarWidth) {
+        html.style.setProperty(scrollbarWidthCssVar, `${scrollbarWidth}px`);
+      }
+      html.classList.add(isOpenClass, openingClass);
+      setTimeout(() => {
+        visibleModal = modal;
+        html.classList.remove(openingClass);
+      }, animationDuration);
+      modal.showModal();
+    };
+
+    // Close modal
+    const closeModal = (modal) => {
+      visibleModal = null;
+      const { documentElement: html } = document;
+      html.classList.add(closingClass);
+      setTimeout(() => {
+        html.classList.remove(closingClass, isOpenClass);
+        html.style.removeProperty(scrollbarWidthCssVar);
+        modal.close();
+      }, animationDuration);
+    };
+
+    // Get scrollbar width
+    const getScrollbarWidth = () => {
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+      return scrollbarWidth;
+    };
+
+    const isScrollbarVisible = () => {
+      return document.body.scrollHeight > screen.height;
+    };
+  </script>
+</html>
