@@ -191,9 +191,9 @@ async fn main() {
         .or(picocss_route)
         .or(confetti_route);
 
-        println!("端口3030，我发誓之后一定会把Print补上...");
+        println!("原");
     tokio::spawn(handle_connection(app_state_clone));
-    warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
+    warp::serve(routes).run(([0, 0, 0, 0], 80)).await;
 }
 
 #[derive(Debug, Deserialize)]

@@ -43,11 +43,23 @@
       id="main"
       style="width: 98%; height: 98%; position: absolute; margin: 1% 1%"
     ></div>
+    <label style="bottom: 0; z-index: 100">
+      Brightness
+      <input type="range" id="sizeRangee" />
+    </label>
   </body>
   <script type="text/javascript">
     var chartDom = document.getElementById("main");
     var myChart = echarts.init(chartDom);
     var option;
+
+    const sizeRangee = document.getElementById("sizeRangee");
+
+    // 监听range输入框变化事件
+    sizeRangee.addEventListener("input", function () {
+      // 在变化时修改main div的字体粗细
+      chartDom.style.fontWeight = sizeRange.value;
+    });
 
     const data = [];
     for (let i = 0; i < 10; ++i) {
@@ -68,6 +80,10 @@
       xAxis: {
         type: "category",
         data: ["原", "神", "启", "动"],
+        axisLabel: {
+          fontWeight: "bold",
+          fontSize: 20,
+        },
       },
       yAxis: {
         type: "value",
@@ -160,6 +176,13 @@
 
       // 清空输入框
       messageInput.value = "";
+    }
+
+    let prefersDarkMode = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    if (prefersDarkMode) {
+      console.log("Dark")
     }
 
     // Config
