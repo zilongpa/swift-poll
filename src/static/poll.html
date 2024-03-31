@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -97,17 +97,21 @@
 
       if (message.status == 1) {
         var buttonTexts = message.options;
+        var buttonColors = message.colors;
         buttonContainer.innerHTML = "";
         buttonTexts.forEach((text, index) => {
           const button = document.createElement("button");
           button.textContent = text;
           button.className = "option";
           button.id = index
+          button.style.backgroundColor = buttonColors.pop();
           button.addEventListener("click", () => {
             sendWebSocketRequest(button.id);
           });
           buttonContainer.appendChild(button);
         });
+
+        
         title.textContent = message.title;
         closeModal(document.getElementById("modal-idle"));
       } else if (message.status == 2) {

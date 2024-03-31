@@ -29,6 +29,9 @@
           <label for="pollOptions">Poll Options (comma-separated):</label>
           <input type="text" id="pollOptions" name="options" required />
 
+          <label for="pollColors">Poll Colors (comma-separated):</label>
+          <input type="text" id="pollColors" name="colors" required />
+
           <button type="button" onclick="createPoll()">Create Poll</button>
         </form>
         <footer>暂无查重，但我不说你也发现不了</footer>
@@ -62,6 +65,10 @@
             .getElementById("pollOptions")
             .value.split(",");
 
+          const pollColors = document
+            .getElementById("pollColors")
+            .value.split(",");
+
           fetch(apiUrl + "/create_poll", {
             method: "POST",
             headers: {
@@ -71,6 +78,7 @@
               id: pollId,
               name: pollName,
               options: pollOptions,
+              colors: pollColors,
             }),
           })
             .then((response) => response.json())

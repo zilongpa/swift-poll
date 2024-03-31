@@ -22,14 +22,16 @@ struct Poll {
     name: String,         // 投票的显示名称，用于前端渲染
     options: Vec<String>, // 选项名称在数组中的索引，最多支持256个选项
     polls: Vec<u16>,      // 各选项的票数
+    colors: Vec<String>,
 }
 
 impl Poll {
-    fn new(name: String, options_in: Vec<String>) -> Self {
+    fn new(name: String, options_in: Vec<String>, colors_in: Vec<String>) -> Self {
         Self {
             name,
             options: options_in.clone(),
             polls: vec![0; options_in.len()],
+            colors: colors_in.clone(),
         }
     }
 
@@ -201,6 +203,7 @@ struct CreatePollData {
     id: String,
     name: String,
     options: Vec<String>,
+    colors: Vec<String>,
 }
 
 async fn handle_create_poll(
@@ -212,7 +215,7 @@ async fn handle_create_poll(
         .write()
         .await
         .polls
-        .insert(json.id, Poll::new(json.name, json.options));
+        .insert(json.id, Poll::new(json.name, json.options,json.colors));
     Ok(warp::reply::html("请求成功"))
 }
 
@@ -232,6 +235,7 @@ async fn handle_start_poll(
             "status": 1,
             "title": app_state_clone.read().await.polls.get(&json.id).unwrap().name,
             "options": app_state_clone.read().await.polls.get(&json.id).unwrap().options,
+            "colors": app_state_clone.read().await.polls.get(&json.id).unwrap().colors,
         });
         screen_message(new_json.to_string().as_str(), &app_state_clone).await;
         poll_message(new_json.to_string().as_str(), &app_state_clone).await;
@@ -307,6 +311,7 @@ async fn screen_connected(ws: WebSocket, app_state_clone: AppStateArc) {
                 "status": 1,
                 "title": app_state_clone.read().await.polls.get(current).unwrap().name,
                 "options": app_state_clone.read().await.polls.get(current).unwrap().options,
+                "colors": app_state_clone.read().await.polls.get(current).unwrap().colors,
             });
             let _ = tx.send(Message::text(new_json.to_string().as_str()));
         }
@@ -394,6 +399,7 @@ async fn poll_connected(ws: WebSocket, app_state_clone: AppStateArc) {
                 "status": 1,
                 "title": app_state_clone.read().await.polls.get(current).unwrap().name,
                 "options": app_state_clone.read().await.polls.get(current).unwrap().options,
+                "colors": app_state_clone.read().await.polls.get(current).unwrap().colors,
             });
             let _ = tx.send(Message::text(new_json.to_string().as_str()));
         }
