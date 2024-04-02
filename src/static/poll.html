@@ -104,7 +104,7 @@
           button.textContent = text;
           button.className = "option";
           button.id = index
-          button.style.backgroundColor = buttonColors.pop();
+          button.style.backgroundColor = buttonColors.shift();
           button.addEventListener("click", () => {
             sendWebSocketRequest(button.id);
           });
