@@ -79,6 +79,7 @@
     const host = document.location.host;
     const wsURL = protocol + host + "/websocket/poll";
     const socket = new WebSocket(wsURL);
+    const hasVoted = localStorage.getItem("hasVoted");
 
     socket.addEventListener("open", (event) => {
       console.log("WebSocket 连接已打开");
@@ -99,6 +100,11 @@
         var buttonTexts = message.options;
         var buttonColors = message.colors;
         buttonContainer.innerHTML = "";
+
+      if (hasVoted) {
+        title.textContent = "You have already voted!";
+        closeModal(document.getElementById("modal-idle"));
+      } else {
         buttonTexts.forEach((text, index) => {
           const button = document.createElement("button");
           button.textContent = text;
@@ -106,17 +112,19 @@
           button.id = index
           button.style.backgroundColor = buttonColors.shift();
           button.addEventListener("click", () => {
+            // Mark user as voted and disable further voting
+            localStorage.setItem("hasVoted", "true");
             sendWebSocketRequest(button.id);
           });
           buttonContainer.appendChild(button);
         });
 
-        
         title.textContent = message.title;
         closeModal(document.getElementById("modal-idle"));
-      } else if (message.status == 2) {
-        openModal(document.getElementById("modal-idle"));
       }
+    } else if (message.status == 2) {
+      openModal(document.getElementById("modal-idle"));
+    }
     });
 
     function sendWebSocketRequest(value) {
