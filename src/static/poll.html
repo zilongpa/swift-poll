@@ -100,6 +100,7 @@
         var buttonTexts = message.options;
         var buttonColors = message.colors;
         buttonContainer.innerHTML = "";
+        localStorage.setItem("hasVoted", null);
 
       if (hasVoted) {
         title.textContent = "You have already voted!";
