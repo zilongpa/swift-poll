@@ -24,6 +24,20 @@
         </h2>
       </article>
     </dialog>
+    <dialog id="modal-voted">
+      <article>
+        <h2
+          style="
+            text-align: center;
+            margin: 0.5em 0.5em;
+            user-select: none;
+            cursor: default;
+          "
+        >
+          您已参与当前轮次的投票
+        </h2>
+      </article>
+    </dialog>
     <dialog id="modal-connecting" open>
       <article>
         <h2
@@ -100,12 +114,16 @@
         var buttonTexts = message.options;
         var buttonColors = message.colors;
         buttonContainer.innerHTML = "";
-        localStorage.setItem("hasVoted", null);
-
-      if (hasVoted) {
-        title.textContent = "You have already voted!";
+       // var old = localStorage.getItem("hasVoted");
+        
+       
+      if (localStorage.getItem("hasVoted")==message.title) {
+        // title.textContent = "You have already voted!";
         closeModal(document.getElementById("modal-idle"));
+        openModal(document.getElementById("modal-voted"));
       } else {
+        closeModal(document.getElementById("modal-voted"));
+         
         buttonTexts.forEach((text, index) => {
           const button = document.createElement("button");
           button.textContent = text;
@@ -114,8 +132,9 @@
           button.style.backgroundColor = buttonColors.shift();
           button.addEventListener("click", () => {
             // Mark user as voted and disable further voting
-            localStorage.setItem("hasVoted", "true");
+            localStorage.setItem("hasVoted", message.title);
             sendWebSocketRequest(button.id);
+            openModal(document.getElementById("modal-voted"));
           });
           buttonContainer.appendChild(button);
         });
