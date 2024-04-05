@@ -94,6 +94,7 @@
         data: ["B", "U", "3", "0", "3"],
         color: "black",
         axisLabel: {
+          show: true,
           fontWeight: "normal",
           color: "black",
           fontSize: 40,
@@ -164,7 +165,11 @@
         option.title.text = message.title;
 
         option.xAxis.data = message.options;
-
+        if (message.options.length > 5){
+          option.xAxis.axisLable.show = false;
+        } else {
+          option.xAxis.axisLable.show = true;
+        }
         var mergedArray = Array(message.options.length)
           .fill(0)
           .map(function (element, index) {
