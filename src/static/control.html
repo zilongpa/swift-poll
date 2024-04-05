@@ -9,8 +9,13 @@
   </head>
   <body>
     <main class="container">
-      <h1>BUCSSA 投票系统临时控制台，但是否真的临时和我无关</h1>
+      <h1>BUCSSA 投票系统临时控制台，但原神是一款开放世界角色扮演游戏</h1>
 
+      <article>
+        <header>允许当前设备重复投票（用于手动修正）</header>
+        <button onclick="localStorage.setItem('bypass', true)">点击启用</button>
+        <button onclick="localStorage.removeItem('bypass')">点击关闭</button>
+      </article>
       <article>
         <header>停止当前投票</header>
         <form id="stopPollForm">
@@ -34,7 +39,9 @@
 
           <button type="button" onclick="createPoll()">Create Poll</button>
         </form>
-        <footer>暂无查重，但我不说你也发现不了</footer>
+        <footer>
+          请不要创建重复的投票（ID以及名称），使用英文逗号分隔内容
+        </footer>
       </article>
 
       <article>

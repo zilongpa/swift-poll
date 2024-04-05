@@ -20,7 +20,7 @@
             cursor: default;
           "
         >
-          Websocket连接已中断
+          连接已中断，请刷新界面
         </h2>
       </article>
     </dialog>
@@ -67,24 +67,31 @@
       </article>
     </dialog>
     <main class="container">
-    <h1 id="title" style="text-align: center;">Hello world!</h1>
+      <h1 id="title" style="text-align: center">Hello world!</h1>
       <div
         id="buttonContainer"
+        class="grid"
         style="
-          display: flex;
-          align-items: stretch;
-          flex-wrap: wrap;
-          justify-content: space-between;
+          max-width: 767px;
+          margin: auto auto;
+          grid-template-columns: unset;
         "
       ></div>
     </main>
   </body>
   <style>
-    .option {
-      margin: 0.5em 0.5em;
+    .option > div {
       display: flex;
+      align-items: baseline;
+      justify-content: space-around;
+      flex-wrap: wrap;
+    }
+    .option > div > button {
       flex-grow: 1;
-      align-items: stretch;
+      margin: 0 10px;
+    }
+    .option > div > p {
+      flex-grow: 2;
     }
   </style>
   <script>
@@ -114,37 +121,53 @@
         var buttonTexts = message.options;
         var buttonColors = message.colors;
         buttonContainer.innerHTML = "";
-       // var old = localStorage.getItem("hasVoted");
-        
-       
-      if (localStorage.getItem("hasVoted")==message.title) {
-        // title.textContent = "You have already voted!";
-        closeModal(document.getElementById("modal-idle"));
-        openModal(document.getElementById("modal-voted"));
-      } else {
-        closeModal(document.getElementById("modal-voted"));
-         
-        buttonTexts.forEach((text, index) => {
-          const button = document.createElement("button");
-          button.textContent = text;
-          button.className = "option";
-          button.id = index
-          button.style.backgroundColor = buttonColors.shift();
-          button.addEventListener("click", () => {
-            // Mark user as voted and disable further voting
-            localStorage.setItem("hasVoted", message.title);
-            sendWebSocketRequest(button.id);
-            openModal(document.getElementById("modal-voted"));
-          });
-          buttonContainer.appendChild(button);
-        });
+        // var old = localStorage.getItem("hasVoted");
 
-        title.textContent = message.title;
-        closeModal(document.getElementById("modal-idle"));
+        if (
+          localStorage.getItem("hasVoted") == message.title &&
+          !localStorage.getItem("bypass")
+        ) {
+          // title.textContent = "You have already voted!";
+          closeModal(document.getElementById("modal-idle"));
+          openModal(document.getElementById("modal-voted"));
+        } else {
+          closeModal(document.getElementById("modal-voted"));
+
+          buttonTexts.forEach((text, index) => {
+            const button = document.createElement("button");
+            const article = document.createElement("article");
+            const header = document.createElement("header");
+            const div = document.createElement("div");
+            var color = buttonColors.shift();
+            header.style.backgroundColor = color;
+            article.appendChild(header);
+            article.className = "option";
+
+            button.textContent = "投票";
+            button.className = "secondary";
+            button.id = index;
+            button.style.backgroundColor = color;
+            button.addEventListener("click", () => {
+              // Mark user as voted and disable further voting
+              localStorage.setItem("hasVoted", message.title);
+              sendWebSocketRequest(button.id);
+              if (!localStorage.getItem("bypass")) {
+                openModal(document.getElementById("modal-voted"));
+              }
+            });
+
+            div.innerHTML = "<p>投票给：<b>" + text + "</b></p>";
+            div.appendChild(button);
+            article.appendChild(div);
+            buttonContainer.appendChild(article);
+          });
+
+          title.textContent = message.title;
+          closeModal(document.getElementById("modal-idle"));
+        }
+      } else if (message.status == 2) {
+        openModal(document.getElementById("modal-idle"));
       }
-    } else if (message.status == 2) {
-      openModal(document.getElementById("modal-idle"));
-    }
     });
 
     function sendWebSocketRequest(value) {
