@@ -26,11 +26,14 @@ struct Poll {
 }
 
 impl Poll {
-    fn new(name: String, options_in: Vec<String>, colors_in: Vec<String>) -> Self {
+    fn new(name: String, options_in: Vec<String>, colors_in: Vec<String>, offsets_in: Option<Vec<u16>>) -> Self {
         Self {
             name,
             options: options_in.clone(),
-            polls: vec![0; options_in.len()],
+            polls: match offsets_in {
+                None => vec![0; options_in.len()],
+                Some(o) => o.clone(),
+            },
             colors: colors_in.clone(),
         }
     }
@@ -204,6 +207,7 @@ struct CreatePollData {
     name: String,
     options: Vec<String>,
     colors: Vec<String>,
+    offsets: Option<Vec<u16>>,
 }
 
 async fn handle_create_poll(
@@ -215,7 +219,7 @@ async fn handle_create_poll(
         .write()
         .await
         .polls
-        .insert(json.id, Poll::new(json.name, json.options,json.colors));
+        .insert(json.id, Poll::new(json.name, json.options,json.colors, json.offsets));
     Ok(warp::reply::html("请求成功"))
 }
 

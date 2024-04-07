@@ -37,6 +37,9 @@
           <label for="pollColors">Poll Colors (comma-separated):</label>
           <input type="text" id="pollColors" name="colors" required />
 
+          <label for="pollOffsets">Poll Offsets (optional, comma-separated):</label>
+          <input type="text" id="pollOffsets" name="offsets" />
+
           <button type="button" onclick="createPoll()">Create Poll</button>
         </form>
         <footer>
@@ -76,17 +79,37 @@
             .getElementById("pollColors")
             .value.split(",");
 
+          var pollOffsets = document
+            .getElementById("pollOffsets")
+            .value
+          
+          var body;
+            
+          if (pollOffsets!=""){
+            body = JSON.stringify({
+              id: pollId,
+              name: pollName,
+              options: pollOptions,
+              colors: pollColors,
+              offsets: pollOffsets.split(",").map(str => parseInt(str)),
+            })
+          } else {
+            body = JSON.stringify({
+              id: pollId,
+              name: pollName,
+              options: pollOptions,
+              colors: pollColors,
+            })
+          }
+
+          console.log(body)
+
           fetch(apiUrl + "/create_poll", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              id: pollId,
-              name: pollName,
-              options: pollOptions,
-              colors: pollColors,
-            }),
+            body: body,
           })
             .then((response) => response.json())
             .then((data) => console.log(data))
